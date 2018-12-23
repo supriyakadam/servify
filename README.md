@@ -5,7 +5,8 @@ npm install express
 npm install body-parser
 
 
-On the first page the application allows the user to create a service area,edit and delete(by selecting the polygon) the service area.
+On the first page the application allows the user to create a service area, delete(by selecting the polygon) the service area.
+The user can stretch the corners of the polygon while creating it.
 To draw the polygons select the draw icon(upper-left corner), hand-cursor icon to navigate and zoom the map.
 The user can view already created service areas (in red shade).
 The user can view the co-ordinates of any polygon drawn on the map,by clicking on it.
