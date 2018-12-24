@@ -4,32 +4,17 @@ app
     '$stateProvider',
     '$urlRouterProvider',
     function ($stateProvider, $urlRouterProvider) {
-     $stateProvider
+      $stateProvider
         .state('home', {
           url: '/',
           templateUrl: '../index.html',
           controller: 'MapCtrl'
         })
         .state('checkServiceAreas', {
-        url: '/checkServiceAreas',
-        templateUrl: '../checkServiceAreas.html',
-        controller: 'checkServiceAreasCtrl'
-      })
-
-
-    //   $stateProvider.state({
-    //     name: 'checkServiceAreas',
-    //     url: '/checkServiceAreas',
-    //     abstract: true,
-    //     template: '<div ui-view></div>',
-    //     children: [{
-    //         name: 'checkServiceAreas',
-    //         url: '/checkServiceAreas',
-    //         templateUrl: '../checkServiceAreas.html',
-    //         controller: 'checkServiceAreasCtrl'
-    //     }]
-    // })
-
+          url: '/checkServiceAreas',
+          templateUrl: '../checkServiceAreas.html',
+          controller: 'checkServiceAreasCtrl'
+        })
 
       $urlRouterProvider.otherwise('home');
     }
@@ -46,14 +31,15 @@ app.controller('MapCtrl', function ($scope, $http, $localStorage) {
   $scope.coordinates = [];
   var currentPolygon = [];
   $scope.$storage = $localStorage;
-  if ($localStorage.project === undefined) {
-    $localStorage.project = [];
-  }
+  // if ($localStorage.project === undefined) {
+  //   $localStorage.project = [];
+  // }
   if ($localStorage.polyBounds === undefined) {
     $localStorage.polyBounds = [];
   }
 
   function clearSelection() {
+    infoWindow.close(map)
     if (selectedShape) {
       selectedShape.setEditable(false);
       selectedShape = null;
@@ -62,8 +48,6 @@ app.controller('MapCtrl', function ($scope, $http, $localStorage) {
   // $localStorage.project = [];
   // $localStorage.polyBounds=[];
   function showInfo(event) {
-    // Since this polygon has only one path, we can call getPath() to return the
-    // MVCArray of LatLngs.
     var vertices = this.getPath();
     var contentString = 'Clicked location: <br>' + "" + event.latLng.lat() + ',' + event.latLng.lng() +
       '<br>';
@@ -80,7 +64,6 @@ app.controller('MapCtrl', function ($scope, $http, $localStorage) {
     // Replace the info window's content and position.
     infoWindow.setContent(contentString);
     infoWindow.setPosition(event.latLng);
-
     infoWindow.open(map);
   }
 
@@ -120,7 +103,7 @@ app.controller('MapCtrl', function ($scope, $http, $localStorage) {
       });
       $scope.coordinates = [];
       if (response && !response.err) {
-        $scope.$storage.project.push(response.data);
+        // $scope.$storage.project.push(response.data);
         var newCoordinates = response.data.loc.coordinates[0];
         var polyBoundsArr = newCoordinates.map((n, i) => {
           return {
@@ -265,27 +248,108 @@ app.controller('MapCtrl', function ($scope, $http, $localStorage) {
   initialize();
 });
 app.controller('checkServiceAreasCtrl', function ($scope, $http, $localStorage) {
-  console.log("checkservice areas");
-
   function initMap() {
-    map = new google.maps.Map(document.getElementById('map'), {
+    var map = new google.maps.Map(document.getElementById('map'), {
       zoom: 10,
       center: new google.maps.LatLng(19.0760, 72.8777),
       mapTypeId: google.maps.MapTypeId.ROADMAP,
       disableDefaultUI: true,
       zoomControl: true
     });
-    var totalRecords = $localStorage.polyBounds;
+    var infoWindow = new google.maps.InfoWindow;
 
+    function showInfo(event, data) {
+      var contentString = 'Clicked location: <br>' + "" + event.latLng.lat() + ',' + event.latLng.lng() +
+        '<br>';
+      contentString += '<br>' + data.name + '<br>'
+      // Iterate over the vertices.
+      for (var i = 0; i < data.coordinates.length; i++) {
+        contentString += '<br>' + 'Coordinate ' + i + ':<br>' + data.coordinates[i].lat + ',' +
+          data.coordinates[i].lng;
+      }
+      console.log(contentString);
+      // Replace the info window's content and position.
+      infoWindow.setContent(contentString);
+      infoWindow.setPosition(event.latLng);
+      infoWindow.open(map);
+    }
     google.maps.event.addListener(map, 'click', function (e) {
-      var containsLatLong = totalRecords.find((n) => {
+      infoWindow.close(map);
+      var containsLatLong = null;
+      //uncomment from line 281-320 to check service area from backend
+      // $http.post(url + '/serviceArea/checkServiceArea', {
+      //   clickedArea: [e.latLng.lng(), e.latLng.lat()]
+      // }).success(function (response) {
+      //   if (response.data) {
+      //     var coordinates = response.data.loc.coordinates[0].map((n) => {
+      //       return {
+      //         lat: n[1],
+      //         lng: n[0]
+      //       }
+      //     })
+      //     containsLatLong = {
+      //       name: response.data.name,
+      //       coordinates: coordinates
+      //     }
+      //   }
+      //   var resultPath =
+      //       containsLatLong ?
+      //       "m 0 -1 l 1 2 -2 0 z" :
+      //       google.maps.SymbolPath.CIRCLE;
+            
+      //     var resultColor =
+      //       containsLatLong ?
+      //       'blue' :
+      //       'red';
+      //     new google.maps.Marker({
+      //       position: e.latLng,
+      //       map: map,
+      //       icon: {
+      //         path: resultPath,
+      //         fillColor: resultColor,
+      //         fillOpacity: .5,
+      //         strokeColor: 'white',
+      //         strokeWeight: .5,
+      //         scale: 10
+      //       }
+      //     });
+      //     if (containsLatLong) {
+      //       showInfo(e, containsLatLong);
+      //     }
+      // })
+
+      //uncomment from line 323-354 to check service area from localstorage
+      var totalRecords = $localStorage.polyBounds;
+      containsLatLong = totalRecords.find((n) => {
         var polyGon = new google.maps.Polygon({
           paths: n.coordinates
         });
         return google.maps.geometry.poly.containsLocation(e.latLng, polyGon);
       })
+
+      var resultPath =
+        containsLatLong ?
+        "m 0 -1 l 1 2 -2 0 z" :
+        google.maps.SymbolPath.CIRCLE;
+
+      var resultColor =
+        containsLatLong ?
+        'blue' :
+        'red';
+      new google.maps.Marker({
+        position: e.latLng,
+        map: map,
+        icon: {
+          path: resultPath,
+          fillColor: resultColor,
+          fillOpacity: .5,
+          strokeColor: 'white',
+          strokeWeight: .5,
+          scale: 10
+        }
+      });
       if (containsLatLong) {
-        console.log(containsLatLong)
+        showInfo(e, containsLatLong);
       }
     });
   }
